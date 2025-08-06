@@ -19,7 +19,7 @@ embedding_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 db = FAISS.from_texts(texts=texts, embedding=embedding_model, metadatas=metadatas)
 db.save_local("faiss_index")
 
-# ✅ Load saved FAISS index with secure override
+# Load saved FAISS index with secure override
 db = FAISS.load_local("faiss_index", embeddings=embedding_model, allow_dangerous_deserialization=True)
 
 # Sample user query
