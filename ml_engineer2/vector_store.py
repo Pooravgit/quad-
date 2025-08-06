@@ -29,8 +29,25 @@ def build_and_query_vector_store(chunked_docs, query="What is covered under coro
     # Step 5: Search
     results = db.similarity_search(query, k=5)
 
+<<<<<<< HEAD
     print("\n Query Results:")
     for i, res in enumerate(results):
         print(f"\nResult #{i+1}")
         print("Text:", res.page_content[:300])
         print("Metadata:", res.metadata)
+=======
+# Load saved FAISS index with secure override
+db = FAISS.load_local("faiss_index", embeddings=embedding_model, allow_dangerous_deserialization=True)
+
+# Sample user query
+query = "What is covered under amputation or chemotherapy?"
+
+# Search similar chunks
+results = db.similarity_search(query, k=5)
+
+# Print results
+for i, res in enumerate(results):
+    print(f"\nResult #{i+1}")
+    print("Text:", res.page_content)
+    print("Metadata:", res.metadata)
+>>>>>>> 9ce40775907351dbdbb4e270d05eb32983ad791a
