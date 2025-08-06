@@ -1,7 +1,7 @@
 from typing import List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-def chunk_documents(docs: List[dict], chunk_size=1000, chunk_overlap=100):
+def chunk_documents(docs: List[dict], chunk_size=500, chunk_overlap=50):
     """
     Takes a list of documents (from load_documents) and adds a 'chunks' field
     to each with the list of text chunks.

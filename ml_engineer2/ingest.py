@@ -171,34 +171,3 @@ def load_documents(folder_path):
             })
     return docs
 
-# if __name__ == "__main__":
-folder_path = "docs"
-docs = load_documents(folder_path)
-
-for doc in docs:
-    print("\n File:", doc["source"])
-    print("Type:", doc["type"])
-    print("\n--- First 500 characters of text ---\n")
-    print(doc["full_text"][:500])
-    print("\n--- Tables ---")
-    for t in doc["tables"]:
-        print(f"Page {t['page']}, Table {t['table_index']}, Clause ID: {t['clause_id']}")
-        print(t['text'])
-        print("\n")
-
-
-from ingest import load_documents  # your ingestion module
-from chunk_ember import chunk_documents  # if saved as separate file
-
-# Step 1: Load documents
-docs = load_documents("docs")
-
-# Step 2: Chunk them
-chunked_docs = chunk_documents(docs)
-
-# Optional: Print a few chunks for preview
-for doc in chunked_docs:
-    print(f"\n📄 File: {doc['source']}")
-    print(f"🔹 Total Chunks: {len(doc['chunks'])}")
-    print("--- First Chunk ---")
-    print(doc["chunks"][0]["text"][:500])
