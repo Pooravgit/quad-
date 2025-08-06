@@ -6,19 +6,52 @@ from typing import List, Dict
 OLLAMA_URL = "http://localhost:11434/api/chat"
 MODEL_NAME = "llama3.2"  # Replace with actual name from `ollama list`
 
+# def build_prompt(question: str, retrieved_chunks: List[str]) -> str:
+#     context = "\n\n".join([f"Chunk {i+1}:\n{chunk}" for i, chunk in enumerate(retrieved_chunks)])
+
+#     prompt = (
+#         "You are an assistant analyzing policy documents. Based on the following chunks, answer the question in structured JSON format:\n\n"
+#         "Required JSON format:\n"
+#         "{\n"
+#         '  "decision": "Yes" or "No",\n'
+#         '  "justification": "Your explanation",\n'
+#         '  "used_clauses": ["Clause x", "Clause y"]\n'
+#         "}\n\n"
+#         f"Question: {question}\n\n"
+#         f"Context:\n{context}"
+#     )
+
+#     return prompt
+
 def build_prompt(question: str, retrieved_chunks: List[str]) -> str:
     context = "\n\n".join([f"Chunk {i+1}:\n{chunk}" for i, chunk in enumerate(retrieved_chunks)])
 
     prompt = (
-        "You are an assistant analyzing policy documents. Based on the following chunks, answer the question in structured JSON format:\n\n"
-        "Required JSON format:\n"
+        "You are an expert assistant analyzing legal or policy documents."
+        "Based on the following chunks, "
+        "answer the question in the specified structured JSON format.\n\n"
+        
+        "Required JSON Output:\n"
         "{\n"
-        '  "decision": "Yes" or "No",\n'
-        '  "justification": "Your explanation",\n'
-        '  "used_clauses": ["Clause x", "Clause y"]\n'
+        '  "decision": "Yes" | "No" | null,\n'
+        '  "justification": "Your detailed explanation based on clause references",\n'
+        '  "used_clauses": ["Clause x", "Clause y", ...]\n'
         "}\n\n"
+
+        " Instructions:\n"
+        "- Only use information explicitly present in the chunks.\n"
+        "- Do not assume facts that are not stated in the context."
+        "- If the question can be answered as a Yes/No decision, include it in the `decision` field.\n"
+        "- If the policy does not **explicitly** state inclusion or exclusion, default to 'No' for decision."
+        "- If not applicable (e.g., descriptive or informational questions), set `decision` to null.\n"
+        "- The `justification` should be **clear and concise**, ideally 2–3 sentences.\n"
+        "- Avoid overly legalistic or repetitive language in the justification.\n"
+        "- Always include a clear, clause-based justification.\n"
+        "- Mention which clauses were referred to while answering.\n\n"
+
+        f"Now analyze the following:\n"
         f"Question: {question}\n\n"
-        f"Context:\n{context}"
+        f"Context Chunks:\n{context}"
     )
 
     return prompt
