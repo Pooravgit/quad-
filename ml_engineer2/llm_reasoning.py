@@ -1,31 +1,14 @@
 import requests
 import json
-# llm_reasoning.py
-import requests
-import json
 from typing import List, Dict
-import ollama
 
-# Customize this based on where Ollama is running
+# Ollama API settings
 OLLAMA_URL = "http://localhost:11434/api/chat"
-MODEL_NAME = "llama3.2" 
+MODEL_NAME = "llama3.2"  # Replace with actual name from `ollama list`
 
-
-def ask_ollama_llm(prompt, model=MODEL):
-    url = "http://localhost:11434/api/generate"
-    headers = {"Content-Type": "application/json"}
-
-    data = {"model": model,"prompt": prompt,"stream": False}
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-
-    if response.status_code == 200:
-        return response.json()['response'].strip()
-    else:
-        raise Exception(f"Ollama request failed: {response.text}")
-    
 def build_prompt(question: str, retrieved_chunks: List[str]) -> str:
     context = "\n\n".join([f"Chunk {i+1}:\n{chunk}" for i, chunk in enumerate(retrieved_chunks)])
-    
+
     prompt = (
         "You are an assistant analyzing policy documents. Based on the following chunks, answer the question in structured JSON format:\n\n"
         "Required JSON format:\n"
@@ -37,11 +20,8 @@ def build_prompt(question: str, retrieved_chunks: List[str]) -> str:
         f"Question: {question}\n\n"
         f"Context:\n{context}"
     )
-    
-    return prompt
-    
-MODEL = "llama 3.2"
 
+    return prompt
 
 def query_llm(question: str, faiss_results: List[Dict]) -> Dict:
     retrieved_texts = [doc.page_content for doc in faiss_results]
@@ -62,7 +42,7 @@ def query_llm(question: str, faiss_results: List[Dict]) -> Dict:
         response.raise_for_status()
 
         result = response.json()
-        raw_reply = result['message']['content']
+        raw_reply = result.get('message', {}).get('content', '')
 
         try:
             return json.loads(raw_reply)
@@ -74,7 +54,5 @@ def query_llm(question: str, faiss_results: List[Dict]) -> Dict:
         print("Error calling local LLM:", str(e))
         return {"error": str(e)}
 
-
-user_query = "Can the policyholder terminate the policy early due to job relocation?"
-llm_response = query_llm(user_query, results)
-print("Structured Output:\n", llm_response)
+def run_llm_on_query(question: str, faiss_results: List[Dict]) -> Dict:
+    return query_llm(question, faiss_results)
