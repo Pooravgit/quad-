@@ -19,7 +19,7 @@ def main():
     build_faiss_index(chunked_docs)
 
     # Step 4: Define query and search in vector store
-    query = "What is covered under coronary heart disease?"
+    query = "What is the grace period for premium payment under the National Parivar Mediclaim Plus Policy?"
     results = search_faiss_index(query)
     print(f"Retrieved {len(results)} relevant chunks.")
     print(query)

@@ -4,7 +4,8 @@ from typing import List, Dict
 
 # Ollama API settings
 OLLAMA_URL = "http://localhost:11434/api/chat"
-MODEL_NAME = "llama3.2"  # Replace with actual name from `ollama list`
+MODEL_NAME = "llama3.2"
+  # Replace with actual name from `ollama list`
 
 # def build_prompt(question: str, retrieved_chunks: List[str]) -> str:
 #     context = "\n\n".join([f"Chunk {i+1}:\n{chunk}" for i, chunk in enumerate(retrieved_chunks)])
@@ -33,7 +34,7 @@ def build_prompt(question: str, retrieved_chunks: List[str]) -> str:
         
         "Required JSON Output:\n"
         "{\n"
-        '  "decision": "Yes" | "No" | null,\n'
+        '  "decision": "Yes" | "No" | NULL,\n'
         '  "justification": "Your detailed explanation based on clause references",\n'
         '  "used_clauses": ["Clause x", "Clause y", ...]\n'
         "}\n\n"
@@ -43,6 +44,8 @@ def build_prompt(question: str, retrieved_chunks: List[str]) -> str:
         "- Do not assume facts that are not stated in the context."
         "- If the question can be answered as a Yes/No decision, include it in the `decision` field.\n"
         "- If the policy does not **explicitly** state inclusion or exclusion, default to 'No' for decision."
+        "- First, determine if the question is asking whether something is allowed/covered/included/excluded. If YES, then it is a decision question and return a Yes/No in `decision`.\n"
+        "- If the question is descriptive (e.g., 'What is covered...?', 'Explain clause...', 'What does the policy say about...'), set `decision` to null.\n"
         "- If not applicable (e.g., descriptive or informational questions), set `decision` to null.\n"
         "- The `justification` should be **clear and concise**, ideally 2–3 sentences.\n"
         "- Avoid overly legalistic or repetitive language in the justification.\n"
