@@ -1,3 +1,12 @@
 pymupdf==1.24.4
 python-docx==1.1.0
 extract-msg==0.48.4
+fastapi
+uvicorn
+pydantic
+langchain
+faiss-cpu
+PyPDF2
+docx
+python-multipart
+ollama
