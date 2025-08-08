@@ -4,7 +4,7 @@ import fitz  # PyMuPDF
 import pdfplumber
 from docx import Document
 import extract_msg
-from pdf2image import convert_from_path
+# from pdf2image import convert_from_path
 import pytesseract
 import hashlib
 

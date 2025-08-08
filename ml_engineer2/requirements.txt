@@ -10,7 +10,7 @@ PyMuPDF
 pdfplumber
 python-docx
 extract-msg
-pdf2image
-pytesseract
+# pdf2image
+# pytesseract
 langchain
 langchain-text-splitters
