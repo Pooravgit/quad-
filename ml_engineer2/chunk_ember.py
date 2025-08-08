@@ -1,10 +1,10 @@
+# chunk_ember.py
 from typing import List
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 def chunk_documents(docs: List[dict], chunk_size=400, chunk_overlap=64):
     """
-    Takes a list of documents (from load_documents) and adds a 'chunks' field
-    to each with the list of text chunks.
+    Splits each document's text into chunks for embedding/storage.
     """
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
@@ -27,5 +27,4 @@ def chunk_documents(docs: List[dict], chunk_size=400, chunk_overlap=64):
             }
             for i, chunk in enumerate(chunks)
         ]
-
     return docs

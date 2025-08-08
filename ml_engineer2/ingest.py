@@ -1,3 +1,4 @@
+# ingest.py
 import os
 import fitz  # PyMuPDF
 import pdfplumber
@@ -13,18 +14,12 @@ def normalize_whitespace(text):
 
 
 def detect_repeated_lines_across_pages(pages_texts, threshold=3):
-    """
-    Simple heuristic to identify header/footer lines appearing on many pages.
-    Returns a set of lines to strip.
-    """
     from collections import Counter
     line_counter = Counter()
     for page in pages_texts:
         lines = [l.strip() for l in page.splitlines() if l.strip()]
         line_counter.update(set(lines))
-    # lines that appear on >= threshold pages
-    common = {line for line, count in line_counter.items() if count >= threshold}
-    return common
+    return {line for line, count in line_counter.items() if count >= threshold}
 
 
 def clean_page_text(text, common_lines_to_remove):
@@ -40,17 +35,12 @@ def clean_page_text(text, common_lines_to_remove):
 
 
 def read_pdf_fulltext_with_ocr_fallback(file_path, ocr_threshold_chars=50):
-    """
-    Extract text page by page. If a page yields too little text (likely scanned),
-    perform OCR on that page image.
-    """
     full_text_pages = []
     with fitz.open(file_path) as pdf:
         for page_num in range(len(pdf)):
             page = pdf[page_num]
             text = page.get_text()
             if len(text.strip()) < ocr_threshold_chars:
-                # fallback to OCR for this page
                 try:
                     pil_pages = convert_from_path(file_path, first_page=page_num + 1, last_page=page_num + 1, dpi=200)
                     if pil_pages:
@@ -63,7 +53,6 @@ def read_pdf_fulltext_with_ocr_fallback(file_path, ocr_threshold_chars=50):
             else:
                 page_text = text
             full_text_pages.append(f"-- PAGE {page_num + 1} --\n{page_text}")
-    # remove repeated headers/footers
     common = detect_repeated_lines_across_pages(full_text_pages)
     cleaned_pages = [clean_page_text(p, common) for p in full_text_pages]
     combined = "\n\n".join(cleaned_pages)
@@ -73,14 +62,12 @@ def read_pdf_fulltext_with_ocr_fallback(file_path, ocr_threshold_chars=50):
 def extract_tables_pdfplumber(file_path):
     tables_data = []
     with pdfplumber.open(file_path) as pdf:
-        # Collect raw page texts first to help header/footer detection later if needed
         for i, page in enumerate(pdf.pages):
             tables = page.extract_tables()
             for ti, table in enumerate(tables):
                 if table and len(table) >= 1:
                     header = table[0]
                     rows = table[1:]
-                    # build readable representation
                     table_str = " | ".join([h if h else "" for h in header]) + "\n"
                     for row in rows:
                         table_str += " | ".join([cell if cell else "" for cell in row]) + "\n"
@@ -120,31 +107,17 @@ def read_email(file_path):
 
 
 def generate_clause_id(source, page, text_snippet):
-    """
-    Deterministic ID for a clause/chunk: hash of source, page, and a snippet
-    """
     h = hashlib.sha256(f"{source}|{page}|{text_snippet[:100]}".encode("utf-8")).hexdigest()
     return h
 
 
 def load_documents(folder_path):
-    """
-    Returns list of dicts:
-    {
-      source: filename,
-      type: pdf/docx/email,
-      full_text: cleaned full text,
-      tables: [ {page, table_index, text, clause_id}, ... ],
-      metadata: (can include more)
-    }
-    """
     docs = []
     for filename in sorted(os.listdir(folder_path)):
         path = os.path.join(folder_path, filename)
         if filename.lower().endswith(".pdf"):
             full_text = read_pdf_fulltext_with_ocr_fallback(path)
             tables = extract_tables_pdfplumber(path)
-            # add clause_id to table entries
             for t in tables:
                 t["clause_id"] = generate_clause_id(filename, t.get("page"), t["text"])
             docs.append({
@@ -170,4 +143,3 @@ def load_documents(folder_path):
                 "tables": []
             })
     return docs
-

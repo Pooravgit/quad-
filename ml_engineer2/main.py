@@ -1,32 +1,39 @@
+# main.py
+import os
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
 from ingest import load_documents
 from chunk_ember import chunk_documents
 from vector_store import build_faiss_index, search_faiss_index
 from llm_reasoning import run_llm_on_query
 
-def main():
-    folder_path = "docs"
+DOCS_PATH = os.getenv("DOCS_PATH", "docs")
 
-    # Step 1: Load documents
-    docs = load_documents(folder_path)
-    print(f"Loaded {len(docs)} documents.")
+app = FastAPI(title="Policy QA API")
 
-    # Step 2: Chunk documents
-    chunked_docs = chunk_documents(docs)
-    total_chunks = sum(len(doc["chunks"]) for doc in chunked_docs)
-    print(f"Chunked into {total_chunks} total chunks.")
 
-    # Step 3: Build FAISS vector store
-    build_faiss_index(chunked_docs)
+class QueryIn(BaseModel):
+    query: str
 
-    # Step 4: Define query and search in vector store
-    query = "What is the grace period for premium payment under the National Parivar Mediclaim Plus Policy?"
-    results = search_faiss_index(query)
-    print(f"Retrieved {len(results)} relevant chunks.")
-    print(query)
 
-    # Step 5: Send to LLM for reasoning
-    llm_response = run_llm_on_query(query, results)
-    print("\nLLM Structured Output:\n", llm_response)
+@app.get("/")
+def root():
+    return {"status": "ok"}
 
-if __name__ == "__main__":
-    main()
+
+@app.post("/ingest")
+def ingest_endpoint():
+    if not os.path.isdir(DOCS_PATH):
+        raise HTTPException(status_code=400, detail=f"Docs folder not found at path: {DOCS_PATH}")
+    docs = load_documents(DOCS_PATH)
+    chunked = chunk_documents(docs)
+    build_faiss_index(chunked)
+    return {"status": "ingested", "documents": len(docs), "chunks": sum(len(d.get("chunks", [])) for d in chunked)}
+
+
+@app.post("/query")
+def query_endpoint(payload: QueryIn):
+    results = search_faiss_index(payload.query, k=5)
+    llm_output = run_llm_on_query(payload.query, results)
+    return {"query": payload.query, "retrieved": len(results), "llm": llm_output}
