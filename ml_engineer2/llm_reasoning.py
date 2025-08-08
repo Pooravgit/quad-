@@ -1,11 +1,12 @@
 import requests
 import json
 from typing import List, Dict
+import google.generativeai as genai
 
-# Ollama API settings
-OLLAMA_URL = "http://localhost:11434/api/chat"
-MODEL_NAME = "llama3.2"
-  # Replace with actual name from `ollama list`
+# Google API settings
+MODEL_NAME = "gemini-1.5-flash"  
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") 
+genai.configure(api_key=GOOGLE_API_KEY)
 
 # def build_prompt(question: str, retrieved_chunks: List[str]) -> str:
 #     context = "\n\n".join([f"Chunk {i+1}:\n{chunk}" for i, chunk in enumerate(retrieved_chunks)])
@@ -64,21 +65,32 @@ def query_llm(question: str, faiss_results: List[Dict]) -> Dict:
     prompt = build_prompt(question, retrieved_texts)
 
     try:
-        response = requests.post(
-            OLLAMA_URL,
-            json={
-                "model": MODEL_NAME,
-                "messages": [
-                    {"role": "system", "content": "You are a legal assistant AI for policy analysis."},
-                    {"role": "user", "content": prompt}
-                ],
-                "stream": False
+        model = genai.GenerativeModel(MODEL_NAME)
+
+        response = model.generate_content(
+            [
+                {"role": "system", "parts": "You are a legal assistant AI for policy analysis."},
+                {"role": "user", "parts": prompt}
+            ],
+            generation_config={
+                "response_mime_type": "application/json"
             }
         )
-        response.raise_for_status()
 
-        result = response.json()
-        raw_reply = result.get('message', {}).get('content', '')
+#         response = requests.post(
+#             OLLAMA_URL,
+#             json={
+#                 "model": MODEL_NAME,
+#                 "messages": [
+#                     {"role": "system", "content": "You are a legal assistant AI for policy analysis."},
+#                     {"role": "user", "content": prompt}
+#                 ],
+#                 "stream": False
+#             }
+#         )
+#         response.raise_for_status()
+
+        raw_reply = response.text.strip()
 
         try:
             return json.loads(raw_reply)
@@ -87,8 +99,9 @@ def query_llm(question: str, faiss_results: List[Dict]) -> Dict:
             return {"error": "Invalid JSON format", "raw": raw_reply}
 
     except Exception as e:
-        print("Error calling local LLM:", str(e))
+        print("Error calling Gemini API:", str(e))
         return {"error": str(e)}
+
 
 def run_llm_on_query(question: str, faiss_results: List[Dict]) -> Dict:
     return query_llm(question, faiss_results)
